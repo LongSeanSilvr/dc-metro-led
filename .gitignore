@@ -1,4 +1,4 @@
-.DS_Store
+text secrets.toml .DS_Store
 .vscode
 
 lib
