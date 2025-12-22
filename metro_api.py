@@ -1,6 +1,5 @@
 import board
 import busio
-import time
 import neopixel
 from digitalio import DigitalInOut
 from adafruit_esp32spi import adafruit_esp32spi
@@ -40,7 +39,11 @@ class MetroApi:
             with response: # This ensures the socket is closed automatically
                 train_data = response.json()
                 print('Received response from WMATA api...')
-                trains = filter(lambda t: t['Group'] == group, train_data['Trains'])
+                
+                # Safer access: defaults to empty list if 'Trains' key is missing
+                all_trains = train_data.get('Trains', [])
+                
+                trains = filter(lambda t: t['Group'] == group, all_trains)
                 return list(map(MetroApi._normalize_train_response, trains))
 
         except Exception as e:

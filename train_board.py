@@ -2,115 +2,118 @@ import displayio
 from adafruit_display_shapes.rect import Rect
 from adafruit_display_text.label import Label
 from adafruit_matrixportal.matrix import Matrix
-from adafruit_display_text import LabelBase
-
 from config import config
 
 class TrainBoard:
-	"""
-		get_new_data is a function that is expected to return an array of dictionaries like this:
+    """
+    get_new_data is a function that is expected to return an array of dictionaries like this:
+    [
+        {
+            'line_color': 0xFFFFFF,
+            'destination': 'Dest Str',
+            'arrival': '5'
+        }
+    ]
+    """
+    def __init__(self, get_new_data):
+        self.get_new_data = get_new_data
+        
+        self.display = Matrix().display
 
-		[
-			{
-				'line_color': 0xFFFFFF,
-				'destination': 'Dest Str',
-				'arrival': '5'
-			}
-		]
-	"""
-	def __init__(self, get_new_data):
-		self.get_new_data = get_new_data
-		
-		self.display = Matrix().display
+        self.parent_group = displayio.Group()
 
-		self.parent_group = displayio.Group()
+        self.heading_label = Label(config['font'], anchor_point=(0,0), anchored_position=(.5,.5))
+        self.heading_label.color = config['heading_color']
+        self.heading_label.text = config['heading_text']
+        self.parent_group.append(self.heading_label)
 
-		self.heading_label = Label(config['font'], anchor_point=(0,0), anchored_position=(.5,.5))
-		self.heading_label.color = config['heading_color']
-		self.heading_label.text=config['heading_text']
-		self.parent_group.append(self.heading_label)
+        self.trains = []
+        for i in range(config['num_trains']):
+            self.trains.append(Train(self.parent_group, i))
 
-		self.trains = []
-		for i in range(config['num_trains']):
-			self.trains.append(Train(self.parent_group, i))
+        self.display.root_group = self.parent_group
 
-		self.display.root_group = self.parent_group
+    def refresh(self) -> bool:
+        print('Refreshing train information...')
+        train_data = self.get_new_data()
+        
+        # FIX: If data is None (error), do NOT clear the screen. Return False.
+        if train_data is None:
+            print('Update failed. Keeping existing data on screen.')
+            return False
 
-	def refresh(self) -> bool:
-		print('Refreshing train information...')
-		train_data = self.get_new_data()
-		
-		if train_data is not None:
-			print('Reply received.')
-			for i in range(config['num_trains']):
-				if i < len(train_data):
-					train = train_data[i]
-					self._update_train(i, train['line_color'], train['destination'], train['arrival'])
-				else:
-					self._hide_train(i)
-			
-			print('Successfully updated.')
-		else:
-			print('No data received. Clearing display.')
+        # If we reach here, we have valid data (even if it's an empty list)
+        print('Reply received.')
+        for i in range(config['num_trains']):
+            if i < len(train_data):
+                train = train_data[i]
+                self._update_train(i, train['line_color'], train['destination'], train['arrival'])
+            else:
+                self._hide_train(i)
+        
+        print('Successfully updated.')
+        return True
 
-			for i in range(config['num_trains']):
-				self._hide_train(i)
+    def _hide_train(self, index: int):
+        self.trains[index].hide()
 
-	def _hide_train(self, index: int):
-		self.trains[index].hide()
-
-	def _update_train(self, index: int, line_color: int, destination: str, minutes: str):
-		self.trains[index].update(line_color, destination, minutes)
+    def _update_train(self, index: int, line_color: int, destination: str, minutes: str):
+        self.trains[index].update(line_color, destination, minutes)
 
 class Train:
-	def __init__(self, parent_group, index):
-		y = (int)(config['character_height'] + config['text_padding']) * (index + 1)
+    def __init__(self, parent_group, index):
+        y = (int)(config['character_height'] + config['text_padding']) * (index + 1)
 
-		self.line_rect = Rect(0, y, config['train_line_width'], config['train_line_height'], fill=config['loading_line_color'])
-		
-		self.destination_label = Label(config['font'], anchor_point=(0,0))
-		self.destination_label.x =  config['train_line_width'] + 2
-		self.destination_label.y = y + int((config['train_line_height'])/2)
-		self.destination_label.color = config['text_color']
-		self.destination_label.text = config['loading_destination_text'][:config['destination_max_characters']]
+        self.line_rect = Rect(0, y, config['train_line_width'], config['train_line_height'], fill=config['loading_line_color'])
+        
+        self.destination_label = Label(config['font'], anchor_point=(0,0))
+        self.destination_label.x = config['train_line_width'] + 2
+        self.destination_label.y = y + int((config['train_line_height'])/2)
+        self.destination_label.color = config['text_color']
+        self.destination_label.text = config['loading_destination_text'][:config['destination_max_characters']]
 
-		self.min_label = Label(config['font'], anchor_point=(0,0))
-		self.min_label.x = config['matrix_width'] - (config['min_label_characters'] * config['character_width']) + 1
-		self.min_label.y = y + int((config['train_line_height'])/2)
-		self.min_label.color = config['text_color']
-		self.min_label.text = config['loading_min_text']
+        self.min_label = Label(config['font'], anchor_point=(0,0))
+        self.min_label.x = config['matrix_width'] - (config['min_label_characters'] * config['character_width']) + 1
+        self.min_label.y = y + int((config['train_line_height'])/2)
+        self.min_label.color = config['text_color']
+        self.min_label.text = config['loading_min_text']
 
-		self.group = displayio.Group()
-		self.group.append(self.line_rect)
-		self.group.append(self.destination_label)
-		self.group.append(self.min_label)
+        self.group = displayio.Group()
+        self.group.append(self.line_rect)
+        self.group.append(self.destination_label)
+        self.group.append(self.min_label)
 
-		parent_group.append(self.group)
+        parent_group.append(self.group)
 
-	def show(self):
-		self.group.hidden = False
+    def show(self):
+        self.group.hidden = False
 
-	def hide(self):
-		self.group.hidden = True
+    def hide(self):
+        self.group.hidden = True
 
-	def set_line_color(self, line_color: int):
-		self.line_rect.fill = line_color
+    def set_line_color(self, line_color: int):
+        self.line_rect.fill = line_color
 
-	def set_destination(self, destination: str):
-		self.destination_label.text = destination[:config['destination_max_characters']]
+    def set_destination(self, destination: str):
+        # Optimization: Only update property if text changed to reduce flicker
+        new_text = destination[:config['destination_max_characters']]
+        if self.destination_label.text != new_text:
+            self.destination_label.text = new_text
 
-	def set_arrival_time(self, minutes: str):
-		# Ensuring we have a string
-		minutes = str(minutes)
-		minutes_len = len(minutes)
+    def set_arrival_time(self, minutes: str):
+        # Ensuring we have a string
+        minutes = str(minutes)
+        minutes_len = len(minutes)
 
-		# Left-padding the minutes label
-		minutes = ' ' * (config['min_label_characters'] - minutes_len) + minutes
+        # Left-padding the minutes label
+        new_text = ' ' * (config['min_label_characters'] - minutes_len) + minutes
+        
+        # Optimization: Only update property if text changed
+        if self.min_label.text != new_text:
+            self.min_label.text = new_text
 
-		self.min_label.text = minutes
-
-	def update(self, line_color: int, destination: str, minutes: str):
-		self.show()
-		self.set_line_color(line_color)
-		self.set_destination(destination)
-		self.set_arrival_time(minutes)
+    def update(self, line_color: int, destination: str, minutes: str):
+        self.show()
+        self.set_line_color(line_color)
+        self.set_destination(destination)
+        self.set_arrival_time(minutes)

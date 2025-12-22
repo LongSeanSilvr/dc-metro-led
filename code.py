@@ -1,16 +1,14 @@
 import board
-import digitalio
 import time
-
+import gc
 from config import config
 from train_board import TrainBoard
 from metro_api import MetroApi, MetroApiOnFireException
-from adafruit_display_text import LabelBase
 
 STATION_CODE = config['metro_station_code']
 REFRESH_INTERVAL = config['refresh_interval']
 
-def refresh_trains(train_group: str) -> [dict]:
+def refresh_trains(train_group: str) -> list:
     try:
         return MetroApi.fetch_train_predictions(STATION_CODE, train_group)
     except MetroApiOnFireException:
@@ -18,10 +16,21 @@ def refresh_trains(train_group: str) -> [dict]:
         return None
 
 train_group = config['train_group_1']
-
 train_board = TrainBoard(lambda: refresh_trains(train_group))
 
 while True:
+    # 1. Update the display
     train_board.refresh()
+    
+    # 2. Force a memory cleanup to prevent crashes over time
+    gc.collect()
+    print(f"Free memory: {gc.mem_free()}")
+    
+    # 3. Wait
     time.sleep(REFRESH_INTERVAL)
-    train_group = config['train_group_1'] if train_group == config['train_group_2'] else config['train_group_2']
+    
+    # 4. Toggle the train group for the next run
+    if train_group == config['train_group_1']:
+        train_group = config['train_group_2']
+    else:
+        train_group = config['train_group_1']
