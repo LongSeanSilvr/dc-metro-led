@@ -11,5 +11,5 @@ This version has been specifically optimized for modern CircuitPython and hardwa
 
 ## 🛠 Setup
 1. Copy the contents of this repo to your `CIRCUITPY` drive.
-2. Create a `secrets.toml` or `secrets.py` with your WiFi credentials and WMATA API key.
+2. Edit `config.py` to include your WiFi credentials and WMATA API key.
 3. Ensure your `/lib` folder contains the latest `adafruit_esp32spi` and `adafruit_matrixportal` libraries.
