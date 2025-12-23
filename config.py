@@ -1,3 +1,4 @@
+import os
 from adafruit_bitmap_font import bitmap_font
 
 config = {
@@ -6,10 +7,10 @@ config = {
 	#########################
 
 	# WIFI Network SSID
-	'wifi_ssid': '<your ssid here>',
+	'wifi_ssid': os.getenv("CIRCUITPY_WIFI_SSID"),
 
 	# WIFI Password
-	'wifi_password': '<your pasword>',
+	'wifi_password': os.getenv("CIRCUITPY_WIFI_PASSWORD"),
 
 	#########################
 	# Metro Configuration   #
@@ -24,14 +25,14 @@ config = {
     'train_group_2': '2',
 
 	# API Key for WMATA
-	'metro_api_key': '<your api key>',
+	'metro_api_key': os.getenv("WMATA_API_KEY"),
 
 	#########################
 	# Other Values You      #
 	# Probably Shouldn't    #
 	# Touch                 #
 	#########################
-    'metro_api_url': 'http://api.wmata.com/StationPrediction.svc/json/GetPrediction/', # must use http instead of https for cert reasons
+	'metro_api_url': 'http://api.wmata.com/StationPrediction.svc/json/GetPrediction/',
 	'metro_api_retries': 2,
 	'refresh_interval': 5, # 5 seconds is a good middle ground for updates, as the processor takes its sweet ol time
 	

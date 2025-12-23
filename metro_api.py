@@ -5,7 +5,6 @@ from digitalio import DigitalInOut
 from adafruit_esp32spi import adafruit_esp32spi
 from adafruit_esp32spi.adafruit_esp32spi_wifimanager import WiFiManager
 from config import config
-from secrets import secrets
 
 # Setup the raw hardware pins
 esp32_cs = DigitalInOut(board.ESP_CS)
@@ -18,7 +17,7 @@ esp = adafruit_esp32spi.ESP_SPIcontrol(spi, esp32_cs, esp32_ready, esp32_reset)
 status_pixel = neopixel.NeoPixel(board.NEOPIXEL, 1, brightness=0.1)
 
 # Pass it to the WiFiManager
-wifi = WiFiManager(esp, secrets["ssid"], secrets["password"], status_pixel=status_pixel)
+wifi = WiFiManager(esp, config["wifi_ssid"], config["wifi_password"], status_pixel=status_pixel)
 
 class MetroApiOnFireException(Exception):
     pass

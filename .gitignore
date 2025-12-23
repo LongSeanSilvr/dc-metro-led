@@ -1,5 +1,6 @@
-text secrets.toml .DS_Store
+# Ignore cruft
+.DS_Store
 .vscode
 
-lib
+# Ignore system messages
 boot_out.txt
